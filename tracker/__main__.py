@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -60,6 +61,13 @@ def cmd_run(args, cfg) -> int:
         status = "complete" if s.is_complete(sc.get("min_completeness", 0.9)) else "INCOMPLETE"
         print(f"  {s.dealer_id:14} {status:10} " + "  ".join(parts))
     print(f"  sold this run: {len(sold)}")
+
+    summary = {"run_at": run_at, "sold": [r["vin"] for r in sold], "dealers": {
+        s.dealer_id: {"complete": s.is_complete(sc.get("min_completeness", 0.9)), "conditions": {
+            c.condition: {"found": len(c.listings), "reported": c.reported_total, "pages": c.pages,
+                          "error": c.error, "sample": [l.to_dict() for l in c.listings[:2]]}
+            for c in s.conditions}} for s in scrapes}}
+    Path(args.db).parent.joinpath("last_run.json").write_text(json.dumps(summary, indent=1))
 
     by_id = {d["id"]: d for d in cfg["dealers"]}
     notify.notify_sold(sold, load_subscribers(), by_id, os.environ.get("DASHBOARD_URL"),

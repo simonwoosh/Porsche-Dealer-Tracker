@@ -1,0 +1,38 @@
+name: Diagnose dealer access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe dealer sites
+        run: |
+          mkdir out && cd out
+          UA_BOT="Mozilla/5.0 (compatible; PorscheNWInventoryTracker/1.0; personal, non-commercial; checks each dealer a few times a day)"
+          for url in \
+            https://bellevue.porsche.com/robots.txt \
+            "https://bellevue.porsche.com/en/inventory/porsche/search?condition=new" \
+            https://tacoma.porsche.com/ \
+            "https://tacoma.porsche.com/en/inventory/porsche/search?condition=new" \
+            https://finder.porsche.com/us/en-US/search \
+            https://www.porsche.com/us/en-US/dealersearch/ ; do
+            name=$(echo "$url" | sed 's#https://##; s#[/?=&]#_#g')
+            curl -sS -A "$UA_BOT" -D "$name.headers" -o "$name.body" -w "%{http_code} %{url_effective} redirects=%{num_redirects}\n" -L --max-time 30 "$url" >> summary.txt 2>&1 || echo "curl failed $url" >> summary.txt
+            sleep 5
+          done
+          for h in seattlenorth seattle-north porscheseattlenorth tacoma lynnwood; do
+            echo "$h.porsche.com: $(getent hosts $h.porsche.com || echo none)" >> dns.txt
+          done
+          cat summary.txt dns.txt
+      - name: Push to debug-html branch
+        run: |
+          cd out
+          git init -q -b debug-html
+          git add -A
+          git -c user.name=inventory-bot -c user.email=inventory-bot@users.noreply.github.com commit -q -m "Diagnostics"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" debug-html

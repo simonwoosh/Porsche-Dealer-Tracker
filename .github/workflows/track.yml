@@ -10,6 +10,10 @@ on:
         description: "Skip sending alerts on this run"
         type: boolean
         default: false
+      debug_html:
+        description: "Push page samples to the debug-html branch"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -61,9 +65,19 @@ jobs:
         run: |
           git config user.name "inventory-bot"
           git config user.email "inventory-bot@users.noreply.github.com"
-          git add data/inventory.db
+          git add data/inventory.db data/last_run.json
           git diff --cached --quiet || git commit -m "Inventory update $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
           git push
+
+      - name: Push page samples to debug-html branch
+        if: always() && inputs.debug_html
+        run: |
+          [ -d debug-html ] || exit 0
+          cd debug-html
+          git init -q -b debug-html
+          git add -A
+          git -c user.name=inventory-bot -c user.email=inventory-bot@users.noreply.github.com commit -q -m "Page samples"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" debug-html
 
       - name: Upload dashboard
         if: always()
