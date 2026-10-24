@@ -1,0 +1,101 @@
+{
+ "run_at": "2026-10-24T20:44:17+00:00",
+ "sold": [],
+ "dealers": {
+  "bellevue": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://bellevue.porsche.com/en/inventory/porsche/search?condition=new: HTTP 429",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://bellevue.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  },
+  "spokane": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://spokane.porsche.com/en/inventory/porsche/search?condition=new: HTTP 429",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://spokane.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  },
+  "beaverton": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://beaverton.porsche.com/en/inventory/porsche/search?condition=new: HTTP 429",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://beaverton.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  },
+  "bend": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://bend.porsche.com/en/inventory/porsche/search?condition=new: HTTP 429",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://bend.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  },
+  "boise": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://boise.porsche.com/en/inventory/porsche/search?condition=new: HTTP 429",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://boise.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  }
+ }
+}
