@@ -95,6 +95,9 @@ def _to_str(value) -> str | None:
         for k in ("name", "label", "value", "text", "description"):
             if isinstance(value.get(k), str):
                 return _to_str(value[k])
+    if isinstance(value, list):
+        parts = [p for p in (_to_str(v) for v in value) if p]
+        return " ".join(parts) or None
     return None
 
 
@@ -366,9 +369,15 @@ def _merge(primary: Listing, extra: Listing) -> Listing:
 
 
 def reported_totals(soup: BeautifulSoup) -> dict[str, int]:
-    """Totals the site shows in its condition filter, e.g. "New (146)"."""
+    """Totals the site shows, e.g. "New (146)" or "Showing 1-24 of 87 vehicles".
+
+    "any" is a total for the current search when the condition isn't named.
+    """
     text = " ".join(soup.get_text(" ").split())
     totals: dict[str, int] = {}
+    if m := re.search(r"\bof\s+(\d[\d,]*)\s+(?:vehicles|results|matches|cars)\b", text, re.I) or \
+            re.search(r"\b(\d[\d,]*)\s+(?:vehicles|results|matches)\s+(?:found|available|matching)\b", text, re.I):
+        totals["any"] = int(m.group(1).replace(",", ""))
     if m := re.search(r"\bNew\s*\(\s*(\d+)\s*\)", text):
         totals["new"] = int(m.group(1))
     for m in re.finditer(r"(Certified\s+)?Pre-?Owned\s*\(\s*(\d+)\s*\)", text, re.I):
@@ -379,7 +388,37 @@ def reported_totals(soup: BeautifulSoup) -> dict[str, int]:
     return totals
 
 
+def _json_total(node) -> int | None:
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if re.sub(r"[^a-z]", "", str(k).lower()) in ("totalcount", "totalresults", "totalvehicles", "total") \
+                    and isinstance(v, int) and not isinstance(v, bool):
+                return v
+        for v in node.values():
+            if (t := _json_total(v)) is not None:
+                return t
+    return None
+
+
+def parse_json(text: str, base_url: str) -> PageResult:
+    """A JSON inventory API response (e.g. Dealer.com getInventory)."""
+    data = json.loads(text)
+    found: list[dict] = []
+    _walk_json(data, found)
+    out: dict[str, Listing] = {}
+    for obj in found:
+        if (lst := _listing_from_obj(obj, base_url)):
+            out[lst.vin] = _merge(out[lst.vin], lst) if lst.vin in out else lst
+    total = _json_total(data)
+    return PageResult(listings=list(out.values()), reported_totals={"any": total} if total is not None else {})
+
+
 def parse_page(html: str, base_url: str) -> PageResult:
+    if html.lstrip()[:1] in ("{", "["):
+        try:
+            return parse_json(html, base_url)
+        except ValueError:
+            pass
     soup = BeautifulSoup(html, "lxml")
     structured = parse_structured(html, soup, base_url)
     cards = parse_cards(soup, base_url)

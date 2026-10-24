@@ -1,6 +1,7 @@
 # Porsche dealers tracked by the app.
-# Every US Porsche Center runs on the same Porsche-hosted website platform,
-# so a dealer only needs its site's base URL. Set `enabled: false` to pause one.
+# Most US Porsche Centers run on Porsche's own website platform (the default).
+# Some use their own site: set `platform` to dealeron or dealercom for those.
+# Set `enabled: false` to pause a dealer.
 #
 # Montana and Alaska are not included yet. To add a store, copy an entry and
 # change the id, name, state, and base_url.
@@ -15,14 +16,14 @@ dealers:
     name: Porsche Seattle North
     city: Lynnwood
     state: WA
-    base_url: https://seattlenorth.porsche.com
-    enabled: false  # this address doesn't exist; correct URL still needed
+    base_url: https://www.porscheseattlenorth.com
+    platform: dealeron
   - id: tacoma
     name: Porsche Tacoma
     city: Fife
     state: WA
-    base_url: https://tacoma.porsche.com
-    enabled: false  # this address leads to a login page; correct URL still needed
+    base_url: https://www.porschetacoma.com
+    platform: dealercom
   - id: spokane
     name: Porsche Spokane
     city: Liberty Lake

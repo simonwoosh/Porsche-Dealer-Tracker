@@ -51,3 +51,25 @@ Disallow: /*?*ref=
     assert not robots.allowed(f"{BASE}/en/inventory/porsche/search?condition=new&sort=price")
     assert not robots.allowed(f"{BASE}/en/inventory/porsche/details/x/contact")
     assert not robots.allowed(f"{BASE}/en?ref=abc")
+
+
+def test_json_inventory_api():
+    import json
+    payload = {"pageInfo": {"totalCount": 2, "pageSize": 18}, "inventory": [
+        {"vin": "WP0AA2A99TS207294", "title": ["2026 Porsche", "911 Carrera"], "year": 2026,
+         "link": "/new/Porsche/2026-Porsche-911.htm",
+         "pricing": {"retailPrice": "$181,575", "dprice": []}, "odometer": "12 miles"},
+        {"vin": "WP0AD2Y14TSA36058", "model": "Taycan GTS", "year": 2026,
+         "pricing": {"retailPrice": "$176,705"}},
+    ]}
+    r = parse_page(json.dumps(payload), "https://www.porschetacoma.com")
+    assert r.reported_totals == {"any": 2}
+    a, b = r.listings
+    assert (a.vin, a.price, a.year, a.model) == ("WP0AA2A99TS207294", 181575, 2026, "911 Carrera")
+    assert a.url == "https://www.porschetacoma.com/new/Porsche/2026-Porsche-911.htm"
+    assert b.model == "Taycan GTS" and b.price == 176705
+
+
+def test_dealeron_totals():
+    html = "<html><body><p>Showing 1 - 24 of 87 Vehicles</p></body></html>"
+    assert parse_page(html, BASE).reported_totals == {"any": 87}

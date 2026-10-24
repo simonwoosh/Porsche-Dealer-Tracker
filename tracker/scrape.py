@@ -101,11 +101,26 @@ class Fetcher:
         raise RuntimeError(f"failed to fetch {url}: {last_exc}")
 
 
-def search_url(base_url: str, condition: str, page: int) -> str:
-    params = {"condition": condition}
-    if page > 1:
-        params["page"] = str(page)
-    return f"{base_url.rstrip('/')}/en/inventory/porsche/search?{urlencode(params)}"
+def search_url(base_url: str, condition: str, page: int, offset: int = 0, platform: str = "porsche") -> str:
+    """Inventory search URL for a dealer website platform.
+
+    page counts from 1; offset is the number of cars already collected, for
+    platforms that page by result offset.
+    """
+    base = base_url.rstrip("/")
+    if platform == "porsche":
+        params = {"condition": condition}
+        if page > 1:
+            params["page"] = str(page)
+        return f"{base}/en/inventory/porsche/search?{urlencode(params)}"
+    if platform == "dealeron":
+        path = "searchnew.aspx" if condition == "new" else "searchused.aspx"
+        return f"{base}/{path}" + (f"?pt={page}" if page > 1 else "")
+    if platform == "dealercom":
+        kind = "NEW" if condition == "new" else "USED"
+        return (f"{base}/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_{kind}:inventory-data-bus1"
+                f"/getInventory?start={offset}")
+    raise ValueError(f"unknown platform {platform!r}")
 
 
 def scrape_dealer(fetcher: Fetcher, dealer: dict, conditions: list[str], max_pages: int) -> DealerScrape:
@@ -117,15 +132,17 @@ def scrape_dealer(fetcher: Fetcher, dealer: dict, conditions: list[str], max_pag
         seen: dict[str, Listing] = {}
         try:
             for page in range(1, max_pages + 1):
-                url = search_url(base, condition, page)
+                url = search_url(base, condition, page, len(seen), dealer.get("platform", "porsche"))
                 html = fetcher.get(base, url)
                 cs.pages = page
                 if fetcher.save_dir and page == 1:
                     fetcher.save_dir.mkdir(parents=True, exist_ok=True)
                     (fetcher.save_dir / f"{dealer['id']}-{condition}-p1.html").write_text(html)
+                    (fetcher.save_dir / f"{dealer['id']}-{condition}-p1.url").write_text(url)
                 parsed = parse_page(html, base)
                 if page == 1:
-                    cs.reported_total = parsed.reported_totals.get(condition)
+                    totals = parsed.reported_totals
+                    cs.reported_total = totals.get(condition, totals.get("any"))
                 new = [l for l in parsed.listings if l.vin not in seen]
                 for l in new:
                     seen[l.vin] = l
