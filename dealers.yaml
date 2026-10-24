@@ -16,11 +16,13 @@ dealers:
     city: Lynnwood
     state: WA
     base_url: https://seattlenorth.porsche.com
+    enabled: false  # this address doesn't exist; correct URL still needed
   - id: tacoma
     name: Porsche Tacoma
     city: Fife
     state: WA
     base_url: https://tacoma.porsche.com
+    enabled: false  # this address leads to a login page; correct URL still needed
   - id: spokane
     name: Porsche Spokane
     city: Liberty Lake

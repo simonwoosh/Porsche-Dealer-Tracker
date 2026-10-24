@@ -1,9 +1,10 @@
 name: Track inventory
 
 on:
-  schedule:
-    # Every 4 hours, at minute 17 to avoid the top-of-hour rush.
-    - cron: "17 */4 * * *"
+  # Schedule paused: Porsche dealer sites challenge requests from GitHub's servers.
+  # schedule:
+  #   # Every 4 hours, at minute 17 to avoid the top-of-hour rush.
+  #   - cron: "17 */4 * * *"
   workflow_dispatch:
     inputs:
       no_alerts:
