@@ -1,5 +1,5 @@
 {
- "run_at": "2026-10-24T20:44:17+00:00",
+ "run_at": "2026-10-24T20:53:21+00:00",
  "sold": [],
  "dealers": {
   "bellevue": {
@@ -17,6 +17,44 @@
      "reported": null,
      "pages": 0,
      "error": "failed to fetch https://bellevue.porsche.com/en/inventory/porsche/search?condition=used: HTTP 429",
+     "sample": []
+    }
+   }
+  },
+  "seattle-north": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 1,
+     "error": null,
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 1,
+     "error": null,
+     "sample": []
+    }
+   }
+  },
+  "tacoma": {
+   "complete": false,
+   "conditions": {
+    "new": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://www.porschetacoma.com/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_NEW:inventory-data-bus1/getInventory?start=0: 403 Client Error: Forbidden for url: https://www.porschetacoma.com/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_NEW:inventory-data-bus1/getInventory?start=0",
+     "sample": []
+    },
+    "used": {
+     "found": 0,
+     "reported": null,
+     "pages": 0,
+     "error": "failed to fetch https://www.porschetacoma.com/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_USED:inventory-data-bus1/getInventory?start=0: 403 Client Error: Forbidden for url: https://www.porschetacoma.com/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_USED:inventory-data-bus1/getInventory?start=0",
      "sample": []
     }
    }
