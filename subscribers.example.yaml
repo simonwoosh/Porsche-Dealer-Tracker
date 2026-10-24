@@ -1,0 +1,20 @@
+# Who gets alerted when a car sells. Copy to subscribers.yaml, or store the
+# whole file in the SUBSCRIBERS_YAML repository secret (recommended, keeps
+# email addresses out of the repo).
+#
+# Filters are optional. Leave a filter out (or empty) to match everything.
+# - dealers: dealer ids from dealers.yaml
+# - models: matched case-insensitively against the model name ("911", "GT3", "Taycan")
+# - conditions: new, used
+# - min_price / max_price: listed price at time of sale
+
+subscribers:
+  - name: Simon
+    email: you@example.com
+    # Optional phone push alerts through https://ntfy.sh (install the ntfy app
+    # and subscribe to the same hard-to-guess topic name).
+    # ntfy_topic: porsche-nw-sold-3f9a2c
+    filters:
+      dealers: []
+      models: []
+      conditions: []

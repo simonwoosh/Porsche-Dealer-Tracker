@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Porsche NW Inventory</title>
+<style>
+:root {
+  --bg: #f6f6f4; --surface: #ffffff; --text: #1c1c1e; --muted: #6b6b70; --line: #e3e3e0;
+  --accent: #b5121b; --accent-soft: #fbe9ea; --good: #1f7a3a; --warn: #a15c00; --chip: #efefec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121214; --surface: #1c1c1f; --text: #ececee; --muted: #9a9aa1; --line: #2e2e33;
+    --accent: #ff5a62; --accent-soft: #3a1c1e; --good: #5fcf83; --warn: #f0a84a; --chip: #26262b;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121214; --surface: #1c1c1f; --text: #ececee; --muted: #9a9aa1; --line: #2e2e33;
+  --accent: #ff5a62; --accent-soft: #3a1c1e; --good: #5fcf83; --warn: #f0a84a; --chip: #26262b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.meta { color: var(--muted); font-size: 13px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 20px 0; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.kpi .value { font-size: 26px; font-weight: 650; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.kpi .sub { color: var(--muted); font-size: 12px; }
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-top: 8px; overflow-x: auto; }
+nav.tabs button { background: none; border: 0; padding: 10px 14px; font: inherit; color: var(--muted);
+  cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.filters select, .filters input { font: inherit; padding: 7px 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--surface); color: var(--text); min-width: 0; }
+.filters input { flex: 1 1 180px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--surface); }
+th.num, td.num { text-align: right; }
+th[data-dir="asc"]::after { content: " ▲"; } th[data-dir="desc"]::after { content: " ▼"; }
+tbody tr:last-child td { border-bottom: 0; }
+a { color: inherit; } td a { text-decoration-color: var(--line); text-underline-offset: 3px; }
+.vin { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); }
+.chip { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--chip); font-size: 12px; }
+.chip.cpo { background: var(--accent-soft); color: var(--accent); }
+.down { color: var(--good); } .up { color: var(--warn); }
+.muted { color: var(--muted); }
+.empty { padding: 28px; text-align: center; color: var(--muted); }
+.ok { color: var(--good); } .bad { color: var(--warn); }
+.note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Porsche Northwest Inventory</h1>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="sold" aria-selected="true">Sold</button>
+    <button role="tab" data-tab="active" aria-selected="false">On the lot</button>
+    <button role="tab" data-tab="activity" aria-selected="false">Activity</button>
+    <button role="tab" data-tab="dealers" aria-selected="false">Dealers</button>
+  </nav>
+
+  <div class="filters" id="filters">
+    <select id="f-dealer"><option value="">All dealers</option></select>
+    <select id="f-cond">
+      <option value="">New and pre-owned</option>
+      <option value="new">New</option>
+      <option value="used">Pre-owned</option>
+      <option value="cpo">Certified pre-owned</option>
+    </select>
+    <input id="f-q" type="search" placeholder="Search model, color, VIN, stock">
+  </div>
+
+  <div class="card"><table id="table"><thead></thead><tbody></tbody></table></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const money = (v) => v == null ? "—" : "$" + Math.round(v).toLocaleString("en-US");
+const days = (v) => v == null ? "—" : (v < 1 ? "<1" : Math.round(v).toString());
+const date = (iso) => iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+const dateTime = (iso) => iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+let DATA, dealerName = {}, tab = "sold", sort = { sold: ["sold_detected_at", "desc"], active: ["days_on_lot", "desc"] };
+try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
+
+function title(v) { return [v.year, v.model].filter(Boolean).join(" ") || "Unknown model"; }
+function condChip(v) { return v.certified ? '<span class="chip cpo">CPO</span>' : `<span class="chip">${v.condition === "new" ? "New" : "Pre-owned"}</span>`; }
+function carLink(v) { return v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(title(v))}</a>` : esc(title(v)); }
+function lotDays(v) { return (v.baseline ? "≥ " : "") + days(v.days_on_lot); }
+function priceDelta(v) {
+  const end = v.status === "sold" ? v.sale_price : v.current_price;
+  if (v.first_price == null || end == null || end === v.first_price) return "";
+  const d = end - v.first_price;
+  return ` <span class="${d < 0 ? "down" : "up"}">${d < 0 ? "▼" : "▲"} ${money(Math.abs(d))}</span>`;
+}
+
+function filtered(rows) {
+  const dealer = $("#f-dealer").value, cond = $("#f-cond").value, q = $("#f-q").value.trim().toLowerCase();
+  return rows.filter((v) => {
+    if (dealer && v.dealer_id !== dealer) return false;
+    if (cond === "cpo" && !v.certified) return false;
+    if (cond && cond !== "cpo" && v.condition !== cond) return false;
+    if (q) {
+      const hay = [v.year, v.model, v.exterior, v.interior, v.vin, v.stock].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+const COLS = {
+  sold: [
+    ["model", "Car", (v) => carLink(v) + " " + condChip(v)],
+    ["dealer_id", "Dealer", (v) => esc(dealerName[v.dealer_id] || v.dealer_id)],
+    ["sale_price", "Price at sale", (v) => money(v.sale_price) + priceDelta(v), "num"],
+    ["first_price", "First listed", (v) => money(v.first_price), "num"],
+    ["days_on_lot", "Days on lot", lotDays, "num"],
+    ["sold_detected_at", "Sold", (v) => `<span title="Last listed ${dateTime(v.last_seen)}">${date(v.last_seen)}</span>`],
+    ["mileage", "Miles", (v) => v.mileage != null ? v.mileage.toLocaleString() : "—", "num"],
+    ["exterior", "Color", (v) => esc(v.exterior || "—")],
+    ["vin", "VIN", (v) => `<span class="vin">${v.vin}</span>`],
+  ],
+  active: [
+    ["model", "Car", (v) => carLink(v) + " " + condChip(v)],
+    ["dealer_id", "Dealer", (v) => esc(dealerName[v.dealer_id] || v.dealer_id)],
+    ["current_price", "Price", (v) => money(v.current_price) + priceDelta(v), "num"],
+    ["days_on_lot", "Days on lot", lotDays, "num"],
+    ["first_seen", "First seen", (v) => date(v.first_seen)],
+    ["mileage", "Miles", (v) => v.mileage != null ? v.mileage.toLocaleString() : "—", "num"],
+    ["exterior", "Color", (v) => esc(v.exterior || "—")],
+    ["vin", "VIN", (v) => `<span class="vin">${v.vin}</span>`],
+  ],
+};
+
+function renderTable(kind) {
+  const rows = filtered(DATA.vehicles.filter((v) => v.status === (kind === "sold" ? "sold" : "active")));
+  const [key, dir] = sort[kind];
+  rows.sort((a, b) => {
+    let x = a[key], y = b[key];
+    if (key === "sold_detected_at") { x = a.last_seen; y = b.last_seen; }
+    if (x == null) return 1; if (y == null) return -1;
+    const c = typeof x === "number" ? x - y : String(x).localeCompare(String(y));
+    return dir === "asc" ? c : -c;
+  });
+  const cols = COLS[kind];
+  $("#table thead").innerHTML = "<tr>" + cols.map(([k, label, , cls]) =>
+    `<th data-key="${k}" class="${cls || ""}" ${k === key ? `data-dir="${dir}"` : ""}>${label}</th>`).join("") + "</tr>";
+  $("#table tbody").innerHTML = rows.length
+    ? rows.map((v) => "<tr>" + cols.map(([, , fn, cls]) => `<td class="${cls || ""}">${fn(v)}</td>`).join("") + "</tr>").join("")
+    : `<tr><td class="empty" colspan="${cols.length}">${kind === "sold" ? "No sales detected yet. A car counts as sold after it disappears from two complete scrapes in a row." : "No cars match."}</td></tr>`;
+  $("#table thead").querySelectorAll("th").forEach((th) => th.onclick = () => {
+    const k = th.dataset.key;
+    sort[kind] = [k, sort[kind][0] === k && sort[kind][1] === "desc" ? "asc" : "desc"];
+    renderTable(kind);
+  });
+  $("#note").textContent = `${rows.length} cars. "≥" means the car was already listed when tracking began, so its true time on the lot is longer.` +
+    (kind === "sold" ? " Sold date is the last time the car was seen listed." : "");
+}
+
+function renderActivity() {
+  const byVin = Object.fromEntries(DATA.vehicles.map((v) => [v.vin, v]));
+  const dealer = $("#f-dealer").value;
+  const labels = { arrived: "Arrived", price_change: "Price change", sold: "Sold", relisted: "Back on sale", transferred: "Moved dealer" };
+  const rows = DATA.events.filter((e) => (!dealer || e.dealer_id === dealer) && filtered([byVin[e.vin]].filter(Boolean)).length);
+  $("#table thead").innerHTML = "<tr><th>When</th><th>Event</th><th>Car</th><th>Dealer</th><th class=num>Detail</th></tr>";
+  $("#table tbody").innerHTML = rows.length ? rows.map((e) => {
+    const v = byVin[e.vin] || { vin: e.vin }, d = e.detail || {};
+    let detail = "";
+    if (e.type === "price_change") detail = `${money(d.old)} → ${money(d.new)}`;
+    else if (e.type === "sold") detail = `${money(d.price)} · ${days(d.days_on_lot)} days`;
+    else if (e.type === "transferred") detail = `from ${esc(dealerName[d.from_dealer] || d.from_dealer)}`;
+    else if (d.price != null) detail = money(d.price);
+    return `<tr><td>${dateTime(e.at)}</td><td>${labels[e.type] || e.type}</td><td>${carLink(v)}</td>` +
+      `<td>${esc(dealerName[e.dealer_id] || e.dealer_id)}</td><td class=num>${detail}</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="5">No activity yet. Arrivals, price changes, and sales show up here after the second scrape.</td></tr>`;
+  $("#table thead").querySelectorAll("th").forEach((th) => th.onclick = null);
+  $("#note").textContent = "Most recent 500 events.";
+}
+
+function renderDealers() {
+  $("#table thead").innerHTML = "<tr><th>Dealer</th><th>Location</th><th class=num>On the lot</th><th class=num>Sold</th><th class=num>Median days to sell</th><th>Last check</th></tr>";
+  $("#table tbody").innerHTML = DATA.dealers.map((d) => {
+    const mine = DATA.vehicles.filter((v) => v.dealer_id === d.id);
+    const sold = mine.filter((v) => v.status === "sold");
+    const r = d.last_run;
+    let status = '<span class="muted">Not checked yet</span>';
+    if (r) {
+      const parts = Object.entries(r.detail || {}).filter(([k]) => k !== "error")
+        .map(([k, c]) => `${k}: ${c.found}${c.reported != null ? "/" + c.reported : ""}${c.error ? " ⚠" : ""}`).join(", ");
+      status = `<span class="${r.complete ? "ok" : "bad"}">${r.complete ? "OK" : "Incomplete"}</span> ${dateTime(r.run_at)} <span class="muted">${esc(parts)}</span>`;
+    }
+    return `<tr><td><a href="${esc(d.base_url)}" target="_blank" rel="noopener">${esc(d.name)}</a></td><td>${esc(d.city)}, ${esc(d.state)}</td>` +
+      `<td class=num>${mine.length - sold.length}</td><td class=num>${sold.length}</td>` +
+      `<td class=num>${days(median(sold.filter((v) => !v.baseline).map((v) => v.days_on_lot)))}</td><td>${status}</td></tr>`;
+  }).join("");
+  $("#table thead").querySelectorAll("th").forEach((th) => th.onclick = null);
+  $("#note").textContent = "Found / reported shows how many cars we parsed versus the count the dealer's site shows. Incomplete checks never mark cars as sold. Median days to sell excludes cars already listed when tracking began.";
+}
+
+function renderKpis() {
+  const now = Date.parse(DATA.generated_at);
+  const rows = filtered(DATA.vehicles);
+  const active = rows.filter((v) => v.status === "active");
+  const sold30 = rows.filter((v) => v.status === "sold" && now - Date.parse(v.last_seen) < 30 * 864e5);
+  const soldAll = rows.filter((v) => v.status === "sold");
+  const clean = soldAll.filter((v) => !v.baseline);
+  const cuts = soldAll.filter((v) => v.first_price && v.sale_price).map((v) => (v.first_price - v.sale_price) / v.first_price);
+  const tiles = [
+    ["On the lot", active.length, `median ${days(median(active.map((v) => v.days_on_lot)))} days listed`],
+    ["Sold, last 30 days", sold30.length, `${soldAll.length} since tracking began`],
+    ["Median days to sell", days(median((clean.length ? clean : soldAll).map((v) => v.days_on_lot))), clean.length ? `${clean.length} cars seen arriving` : "lower bound until new arrivals sell"],
+    ["Avg. price cut before sale", cuts.length ? (100 * cuts.reduce((a, b) => a + b, 0) / cuts.length).toFixed(1) + "%" : "—", "from first listed price"],
+  ];
+  $("#kpis").innerHTML = tiles.map(([l, v, s]) => `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="sub">${s}</div></div>`).join("");
+}
+
+function render() {
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  $("#f-cond").hidden = $("#f-q").hidden = tab === "dealers";
+  $("#f-dealer").hidden = tab === "dealers";
+  renderKpis();
+  if (tab === "activity") renderActivity();
+  else if (tab === "dealers") renderDealers();
+  else renderTable(tab);
+}
+
+fetch("data.json", { cache: "no-store" }).then((r) => r.json()).then((data) => {
+  DATA = data;
+  data.dealers.forEach((d) => {
+    dealerName[d.id] = d.name;
+    $("#f-dealer").insertAdjacentHTML("beforeend", `<option value="${esc(d.id)}">${esc(d.name)} (${esc(d.state)})</option>`);
+  });
+  $("#meta").textContent = `Updated ${dateTime(data.generated_at)} · tracking since ${date(data.tracking_since)}`;
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => {
+    tab = b.dataset.tab; try { localStorage.setItem("tab", tab); } catch (e) {} render();
+  });
+  ["#f-dealer", "#f-cond", "#f-q"].forEach((s) => $(s).addEventListener("input", render));
+  render();
+}).catch((e) => { $("#meta").textContent = "Could not load data.json: " + e.message; });
+</script>
+</body>
+</html>

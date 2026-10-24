@@ -1,0 +1,86 @@
+name: Track inventory
+
+on:
+  schedule:
+    # Every 4 hours, at minute 17 to avoid the top-of-hour rush.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      no_alerts:
+        description: "Skip sending alerts on this run"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: track
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Scrape dealers, update history, send alerts
+        env:
+          SUBSCRIBERS_YAML: ${{ secrets.SUBSCRIBERS_YAML }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+        run: |
+          python -m tracker -v run --save-html debug-html --strict \
+            ${{ inputs.no_alerts && '--no-alerts' || '' }}
+
+      - name: Save page samples for debugging
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: debug-html
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Commit history
+        if: always()
+        run: |
+          git config user.name "inventory-bot"
+          git config user.email "inventory-bot@users.noreply.github.com"
+          git add data/inventory.db
+          git diff --cached --quiet || git commit -m "Inventory update $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push
+
+      - name: Upload dashboard
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: track
+    if: always() && needs.track.result != 'cancelled'
+    runs-on: ubuntu-latest
+    # Pages needs a public repo, or GitHub Pro for a private one. If it isn't
+    # set up, this job fails without affecting tracking or alerts.
+    continue-on-error: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

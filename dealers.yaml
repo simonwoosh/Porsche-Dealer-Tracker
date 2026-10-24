@@ -1,0 +1,58 @@
+# Porsche dealers tracked by the app.
+# Every US Porsche Center runs on the same Porsche-hosted website platform,
+# so a dealer only needs its site's base URL. Set `enabled: false` to pause one.
+#
+# Montana and Alaska are not included yet. To add a store, copy an entry and
+# change the id, name, state, and base_url.
+
+dealers:
+  - id: bellevue
+    name: Porsche Bellevue
+    city: Bellevue
+    state: WA
+    base_url: https://bellevue.porsche.com
+  - id: seattle-north
+    name: Porsche Seattle North
+    city: Lynnwood
+    state: WA
+    base_url: https://seattlenorth.porsche.com
+  - id: tacoma
+    name: Porsche Tacoma
+    city: Fife
+    state: WA
+    base_url: https://tacoma.porsche.com
+  - id: spokane
+    name: Porsche Spokane
+    city: Liberty Lake
+    state: WA
+    base_url: https://spokane.porsche.com
+  - id: beaverton
+    name: Porsche Beaverton
+    city: Beaverton
+    state: OR
+    base_url: https://beaverton.porsche.com
+  - id: bend
+    name: Porsche Bend
+    city: Bend
+    state: OR
+    base_url: https://bend.porsche.com
+  - id: boise
+    name: Porsche Boise
+    city: Boise
+    state: ID
+    base_url: https://boise.porsche.com
+
+# Inventory conditions to scrape. "used" includes Porsche Approved (CPO) cars.
+conditions: [new, used]
+
+scrape:
+  # Seconds to wait between requests to the same dealer site.
+  delay_seconds: 4
+  # Safety cap on pages per dealer and condition.
+  max_pages: 40
+  # A car is marked sold after it is missing from this many complete scrapes in a row.
+  # Two avoids false alarms when a listing briefly drops off the site.
+  missed_runs_before_sold: 2
+  # A dealer scrape only counts as complete if we found at least this share of
+  # the total the site reports. Incomplete scrapes never mark cars as sold.
+  min_completeness: 0.9
